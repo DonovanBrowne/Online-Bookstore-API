@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: part 1
+  description: part 1
+  version: 1.0.0
+servers:
+  - url: 'https'
+paths:
+
+# Placeholder file, replace this content with your Open API 3 spec
