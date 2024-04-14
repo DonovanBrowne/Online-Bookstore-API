@@ -9,7 +9,6 @@ import java.util.List;
 @Table(name = "orders")
 public class Order {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private Timestamp datetime;
     private String customerName;
@@ -20,6 +19,11 @@ public class Order {
             inverseJoinColumns = @JoinColumn(name = "book_id")
     )
     private List<Book> books;
+
+    @PrePersist
+    protected void onCreate() {
+        datetime = new Timestamp(System.currentTimeMillis());
+    }
 
     public int getId() {
         return Math.toIntExact(id);

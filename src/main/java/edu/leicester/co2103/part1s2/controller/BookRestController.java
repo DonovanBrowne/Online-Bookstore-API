@@ -3,7 +3,9 @@ package edu.leicester.co2103.part1s2.controller;
 import edu.leicester.co2103.part1s2.domain.Author;
 import edu.leicester.co2103.part1s2.domain.Book;
 import edu.leicester.co2103.part1s2.domain.Order;
+import edu.leicester.co2103.part1s2.repo.AuthorRepository;
 import edu.leicester.co2103.part1s2.repo.BookRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +19,11 @@ import java.util.Optional;
 public class BookRestController {
 
     private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
 
-    public BookRestController(BookRepository bookRepository) {
+    public BookRestController(BookRepository bookRepository, AuthorRepository authorRepository) {
         this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
     }
 
     // Endpoint #7: List all books
@@ -39,6 +43,13 @@ public class BookRestController {
         if (bookRepository.existsByISBN(book.getISBN())) {
             return new ResponseEntity<>("A book with ISBN " + book.getISBN() + " already exists", HttpStatus.CONFLICT);
         } else {
+            // Before saving the book, save the authors associated with the book
+            for(Author author : book.getAuthors()) {
+                if (authorRepository.existsById(author.getId())) {
+                    return new ResponseEntity<>("An author with id " + author.getId() + " already exists", HttpStatus.CONFLICT);
+                }
+                authorRepository.save(author);
+            }
             bookRepository.save(book);
             return new ResponseEntity<>("Book created successfully.", HttpStatus.CREATED);
         }
@@ -76,10 +87,11 @@ public class BookRestController {
     }
 
     // Endpoint #11: Delete a specific book
+    @Transactional
     @DeleteMapping("{ISBN}")
     public ResponseEntity<?> deleteBook(@PathVariable("ISBN") String ISBN) {
         if (bookRepository.existsByISBN(ISBN)) {
-            bookRepository.deleteById(Integer.valueOf(ISBN));
+            bookRepository.deleteByISBN(ISBN);
             return new ResponseEntity<>("Book with ISBN " + ISBN + " deleted successfully.", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Book with ISBN " + ISBN + " not found.", HttpStatus.NOT_FOUND);

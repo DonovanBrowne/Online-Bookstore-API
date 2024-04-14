@@ -3,6 +3,7 @@ package edu.leicester.co2103.part1s2.controller;
 import edu.leicester.co2103.part1s2.domain.Author;
 import edu.leicester.co2103.part1s2.domain.Book;
 import edu.leicester.co2103.part1s2.repo.AuthorRepository;
+import edu.leicester.co2103.part1s2.repo.BookRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +17,11 @@ import java.util.Optional;
 public class AuthorRestController {
 
     private final AuthorRepository authorRepository;
+    private final BookRepository bookRepository;
 
-    public AuthorRestController(AuthorRepository authorRepository) {
+    public AuthorRestController(AuthorRepository authorRepository, BookRepository bookRepository) {
         this.authorRepository = authorRepository;
+        this.bookRepository = bookRepository;
     }
 
     // Endpoint #1: List all authors
@@ -38,7 +41,17 @@ public class AuthorRestController {
         if (authorRepository.existsById(author.getId())) {
             return new ResponseEntity<>("An author with id " + author.getId() + " already exists", HttpStatus.CONFLICT);
         } else {
-            // Save the author
+            // Before saving the author, save the books associated with the author
+            for(Book book : author.getBooks()) {
+                if (bookRepository.existsByISBN(book.getISBN())) {
+                    return new ResponseEntity<>("A book with ISBN " + book.getISBN() + " already exists", HttpStatus.CONFLICT);
+                }
+                // Ensure the id is set for each book
+                if (book.getISBN() == null || book.getISBN().isEmpty()) {
+                    return new ResponseEntity<>("Book ISBN cannot be empty", HttpStatus.BAD_REQUEST);
+                }
+                bookRepository.save(book);
+            }
             authorRepository.save(author);
             return new ResponseEntity<>("Author created successfully.", HttpStatus.CREATED);
         }
@@ -86,18 +99,18 @@ public class AuthorRestController {
     }
 
     // Endpoint #6: List all books written by a specific author
-    @GetMapping("/{authorId}/books")
-    public ResponseEntity<?> getBooksByAuthorId(@PathVariable("authorId") int authorId) {
-        Optional<Author> optionalAuthor = authorRepository.findById(authorId);
+    @GetMapping("/{id}/books")
+    public ResponseEntity<?> getBooksByid(@PathVariable("id") int id) {
+        Optional<Author> optionalAuthor = authorRepository.findById(id);
         if (optionalAuthor.isEmpty()) {
-            return new ResponseEntity<>("Author with id " + authorId + " not found.", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Author with id " + id + " not found.", HttpStatus.NOT_FOUND);
         }
 
         Author author = optionalAuthor.get();
         List<Book> books = author.getBooks();
 
         if (books.isEmpty()) {
-            return new ResponseEntity<>("No books found for author with id " + authorId, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("No books found for author with id " + id, HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(books, HttpStatus.OK);

@@ -1,5 +1,7 @@
 package edu.leicester.co2103.part1s2.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -7,11 +9,12 @@ import java.util.List;
 @Entity
 @Table(name = "books")
 public class Book {
-    @Id
+    @Id @JsonProperty("isbn")
     private String ISBN;
     private String title;
     private int publicationYear;
     private double price;
+
     @ManyToMany
     @JoinTable(
             name = "book_author",
@@ -20,6 +23,7 @@ public class Book {
     )
     private List<Author> authors;
     @ManyToMany(mappedBy = "books")
+    @JsonIgnore
     private List<Order> orders;
 
     public String getISBN() {

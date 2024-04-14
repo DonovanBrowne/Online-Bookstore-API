@@ -9,4 +9,7 @@ public interface BookRepository extends CrudRepository<Book,Integer> {
     boolean existsByISBN(String isbn);
 
     Optional<Book> findByISBN(String isbn);
+
+
+    void deleteByISBN(String isbn);
 }

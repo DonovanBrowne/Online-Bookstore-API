@@ -1,5 +1,6 @@
 package edu.leicester.co2103.part1s2.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -7,13 +8,17 @@ import java.util.List;
 @Entity
 @Table(name = "authors")
 public class Author {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @JsonProperty("id")
     private long id;
     private String name;
     private int birthyear;
     private String nationality;
-    @ManyToMany(mappedBy = "authors", cascade = CascadeType.ALL)
+    @ManyToMany
+    @JoinTable(
+            name = "author_book",
+            joinColumns = @JoinColumn(name = "author_id"),
+            inverseJoinColumns = @JoinColumn(name = "book_id")
+    )
     private List<Book> books;
 
 
